@@ -1,63 +1,56 @@
 # Catatan Sesi & Panduan Lanjutan Hosting Web Kasir
 
-Dokumen ini mencakup ringkasan sesi pengembangan dan langkah-langkah yang perlu dilanjutkan saat sesi berikutnya.
+Dokumen ini diperbarui untuk merangkum progres sesi terakhir dan langkah lanjutan.
 
 ---
 
 ## 1. Status Terakhir Proyek
 - **Lokasi Lokal:** `D:\webkasir`
-- **Repository GitHub:** [https://github.com/Dapoks-tech/web_kasir](https://github.com/Dapoks-tech/web_kasir) (sudah di-push branch `main`)
-- **Frontend Config:** 
-  - Sudah mendukung environment variable `VITE_API_URL`
-  - Dilengkapi `vercel.json` untuk SPA routing
-  - Port lokal diatur ke `3000` dengan `host: true`
-- **Akun Pengguna yang Tersedia (Local Database):**
-  - **Manager:** username `manager` | password `admin123`
-  - **Barista:** username `barista` | password `barista123`
+- **Repository GitHub:** [https://github.com/Dapoks-tech/web_kasir](https://github.com/Dapoks-tech/web_kasir) (branch `main`)
+- **Backend Render:** `https://web-kasir-m58s.onrender.com` (Status: Live, Port: 10000)
+- **Frontend Vercel:** `https://web-kasir-six.vercel.app` (Status: Live)
+- **Database:** TiDB Cloud Serverless (schema `coffeeshop` sudah diinisialisasi via `backend/config/init.sql`)
 
 ---
 
-## 2. Rencana Hosting (Opsi 1: Free Tier)
-- **Database:** TiDB Cloud Serverless (MySQL)
-- **Backend:** Render.com (Web Service)
-- **Frontend:** Vercel (SPA React Vite)
+## 2. Perubahan Kode yang Sudah di-Push ke GitHub
+1. `backend/config/db.js`:
+   - Penambahan opsi SSL default (`rejectUnauthorized: true`) untuk support TiDB Cloud Serverless.
+2. `backend/routes/auth.js`:
+   - Logging detail error (`err.code`, `err.message`, stack trace) pada endpoint `/api/auth/login`.
 
 ---
 
-## 3. Langkah Selanjutnya Saat Melanjutkan
+## 3. Masalah Terakhir yang Ditemukan (Kendala Login)
+- Response saat login dari frontend:
+  ```json
+  {"message": "ECONNREFUSED"}
+  ```
+- **Penyebab:** Backend di Render mencoba terhubung ke `localhost:3306` atau host DB yang salah karena Environment Variables TiDB di dashboard Render belum terpasang/tersimpan dengan benar.
 
-### A. Database (TiDB Cloud)
-1. Buat Serverless Cluster di [TiDB Cloud](https://tidbcloud.com) (Region Singapore).
-2. Simpan kredensial:
-   - `Host`
-   - `Port` (biasanya 4000)
-   - `User`
-   - `Password`
-   - `Database Name` (`coffeeshop`)
-3. Buka **SQL Editor** / **Chat2Query** di TiDB Cloud, jalankan script dari `backend/config/init.sql`.
+---
 
-### B. Backend (Render.com)
-1. Buka [Render.com](https://render.com), hubungkan repo `Dapoks-tech/web_kasir`.
-2. Buat **Web Service**:
-   - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-3. Tambahkan **Environment Variables**:
-   - `DB_HOST` = (dari TiDB)
-   - `DB_PORT` = `4000` (atau sesuai TiDB)
-   - `DB_USER` = (dari TiDB)
-   - `DB_PASSWORD` = (dari TiDB)
-   - `DB_NAME` = `coffeeshop`
-   - `JWT_SECRET` = `coffeeshop_secret_key_2024`
-   - `PORT` = `5000`
-4. Dapatkan URL backend Render (contoh: `https://webkasir-backend.onrender.com`).
+## 4. Rencana Tindakan untuk Sesi Berikutnya
 
-### C. Frontend (Vercel)
-1. Buka [Vercel.com](https://vercel.com), import repo `Dapoks-tech/web_kasir`.
-2. Edit **Root Directory** ke: `frontend`.
-3. Tambahkan **Environment Variable**:
-   - `VITE_API_URL` = `<URL-Backend-Render>/api` (contoh: `https://webkasir-backend.onrender.com/api`)
-4. Klik **Deploy**.
+### Langkah 1: Periksa & Simpan Environment Variables di Render
+Buka Dashboard Render -> Pilih Web Service `web-kasir-m58s` -> Tab **Environment**. Pastikan variabel berikut terisi (ambil dari kredensial cluster TiDB Cloud Anda):
+
+| Key | Value Contoh / Keterangan |
+|---|---|
+| `DB_HOST` | Host TiDB Cloud (misal: `gateway01.ap-southeast-1.prod.aws.tidbcloud.com`) |
+| `DB_PORT` | `4000` |
+| `DB_USER` | Username TiDB Cloud (misal: `xxxxxx.root`) |
+| `DB_PASSWORD` | Password cluster TiDB Cloud Anda |
+| `DB_NAME` | `coffeeshop` |
+| `JWT_SECRET` | `coffeeshop_secret_key_2024` |
+| `PORT` | `10000` |
+
+Klik **Save Changes**. Render akan otomatis merestart service.
+
+### Langkah 2: Uji Coba Login Ulang
+Buka frontend di Vercel (`https://web-kasir-six.vercel.app/login`):
+- Login Manager: `manager` / `admin123`
+- Login Barista: `barista` / `barista123`
 
 ---
 
